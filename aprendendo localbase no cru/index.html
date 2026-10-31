@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarefas</title>
+</head>
+<body>
+    <h1>Tarefas</h1>
+    <form id="form-tarefa">
+        <input type="text" id="titulo" placeholder="Nova Tarefa..." required>
+        <button type="submit">Adicionar</button>
+    </form>
+    <ul id="lista"></ul>
+    <button id="limpar">Apagar todas</button>
+    
+</body>
+<script src="htpps://cdn.jsdelivr.net/npm/localbase@0.8.3/dist/localbase.min.js"></script>
+<script>
+    const Localbase = window.Localbase.default || window.Localbase;
+    const db = new Localbase('cadastroDeTarefas')
+    db.config.default = true //true = log no console
+
+    class Tarefa {
+        constructor(titulo, feita = false, id = null){ //constructor serve para inicializar o objeto, ou seja, dar valores iniciais a suas propriedades
+            this.id = id ?? crypto.randomUUID();
+            this.titulo = titulo;
+            this.feita = feita;
+            this.criadaEm = new Date().toISOString(); //vai converter uma data no formata ISO 8601, UTF zero
+        }
+    }
+    class TarefaRepository {
+        constructor(db) { this.db = db}
+        get colecao() { return this.db.collection('tarefas'); }  // defina a prorpiedade colecao e retorne esse do banco de dados a coleção tarefas
+
+        adicionar(t) { return this.db.colecao.add({...t}, t.id); }
+        listar() { return this.db.colecao.orderBy('criadaEm').get(); }
+        buscarPorId(id) { return this.db.colecao.doc(id).get(); }
+        altenarStatus(t) { return this.db.colecao.doc(t.id).update({ feita : !t.feita }); }
+        remover(id) { return this.db.colecao.doc(id).delete(); }
+        removerTodas() { return this.colecao.delete(); }
+    }
+
+    const repo = new TarefaRepository(db);
+    
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        await repo.adicionar(new Tarefa(input.value.trim()));
+        renderizar();
+    };
+
+    async function renderizar() {
+        const tarefas = await repo.listar();
+        listar.innerHTML = ' ';
+        tarefas.forEach(t => { 
+            const li = document.createElement('li');
+            li.innerHTML = `<input type ="checkbox" ${t.feita ? checked}>`
+
+        };)
+        
+    };
+
+</script>
+</html>
